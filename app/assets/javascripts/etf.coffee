@@ -14,45 +14,67 @@ toNum = (str) -> parseFloat str.split(",").join("")
 dataOf = (code) ->
   switch code
     when "1309"
-      [last_price, last_base, last_divergence] = [20180, 2785, 100 -4.39] # todo データをとってくる
-      [last_index, last_exchange] = [1761.36, 16.1090] # todo データを取ってくる
+      # todo データをとってくる
+      nav_price = {val: 20180, time: "4/24/2013 3:00pm"}
+      nav = {val: 2785, time: "4/24/2013 3:00pm"}
+      nav_premium = {val: 100 -4.39, time: "4/24/2013 3:00pm"}
+      nav_index = {val: 1761.36, time: "4/23/2013 3:00pm"}
+      nav_exchange = {val: 16.1090, time: "4/24/2013 10:00am"}
       [price, index, exchange] = [p("1309"), ix("000016.SS"), ex_chyjpy()]
     when "1322"
-      [last_price, last_base, last_divergence] = [2910, 3577, 100 -18.65] # todo データをとってくる
-      [last_index, last_exchange] = [2450.09, 16.1090] # todo データを取ってくる
+      nav_price = {val: 2910, time: "4/24/2013 3:00pm"}
+      nav = {val: 3577, time: "4/24/2013 3:00pm"}
+      nav_premium = {val: 100 -18.65, time: "4/24/2013 3:00pm"}
+      nav_index = {val: 2450.09, time: "4/23/2013 3:00pm"}
+      nav_exchange = {val: 16.1090, time: "4/24/2013 10:00am"}
       [price, index, exchange] = [p("1322"), ix("000300.SS"), ex_chyjpy()]
 
-  base = $.when(Pr(index), Pr(exchange)).then (index, exchange) ->
-    last_base / (last_index * last_exchange) * (index * exchange)
-  divergence = $.when(Pr(price), Pr(base)).then (price, base) ->
-    (last_divergence * last_base / last_price) * price / base
+  iopv = $.when(Pr(index), Pr(exchange)).then (index, exchange) ->
+    val: nav.val / (nav_index.val * nav_exchange.val) * (index.val * exchange.val)
+    time: exchange.time # todo 本当は考慮した値のなかで最新の時間って感じになるはず
+  premium = $.when(Pr(price), Pr(iopv)).then (price, iopv) ->
+    val: (nav_premium.val * nav.val / nav_price.val) * price.val / iopv.val
+    time: iopv.time # todo 本当は考慮した値のなかで最新の時間って感じになるはず
 
-  last_price: last_price
-  last_index: last_index
-  last_exchange: last_exchange
-  last_base: last_base
-  last_divergence: last_divergence
+  nav_price: nav_price
+  nav_index: nav_index
+  nav_exchange: nav_exchange
+  nav: nav
+  nav_premium: nav_premium
   price: price
   index: index
   exchange: exchange
-  base: base
-  divergence: divergence
+  iopv: iopv
+  premium: premium
 
 
 $ () ->
   $(".etf").each (i, e) ->
     d = dataOf $(e).attr("code")
-    $.when(Pr(d.price), Pr(d.index), Pr(d.exchange), Pr(d.base), Pr(d.divergence)).then (price, index, exchange, base, divergence) ->
-      $(e).find(".last_price").html comma d.last_price
-      $(e).find(".last_index").html comma d.last_index
-      $(e).find(".last_exchange").html comma d.last_exchange, 2
-      $(e).find(".last_base").html comma d.last_base
-      $(e).find(".last_divergence").html pct d.last_divergence
-      $(e).find(".price").html comma price
-      $(e).find(".index").html comma index
-      $(e).find(".exchange").html comma exchange, 2
-      $(e).find(".base").html comma base
-      $(e).find(".divergence").html pct divergence
+    $.when(Pr(d.price), Pr(d.index), Pr(d.exchange), Pr(d.iopv), Pr(d.premium)).then (price, index, exchange, iopv, premium) ->
+      commaDat = (val, precision) ->
+        val: comma val.val, precision
+        time: val.time
+
+      pctDat = (val) ->
+        val: pct val.val
+        time: val.time
+
+      vals =
+        nav_price: commaDat d.nav_price
+        nav_index: commaDat d.nav_index
+        nav_exchange: commaDat d.nav_exchange, 2
+        nav: commaDat d.nav
+        nav_premium: pctDat d.nav_premium
+        price: commaDat price
+        index: commaDat index
+        exchange: commaDat exchange, 2
+        iopv: commaDat iopv
+        premium: pctDat premium
+
+      for name, val of vals
+        $(e).find(".#{name}").html val.val
+        $(e).find(".#{name}").tooltip {title: val.time}
 
 
 # () -> Promise(price)
@@ -63,19 +85,27 @@ p = (code) ->
     dataType: 'html'
 
   htmlP.then (html) ->
-    toNum $(html).find(".stoksPrice:eq(1)").html()
+    d = new Date
+    [yy, mm, dd, hour, min] = [d.getFullYear(), d.getMonth() + 1, d.getDate(), d.getHours(), d.getMinutes()]
+    ampm = (h) -> if h >= 12 then "pm" else "am"
+    val: toNum $(html).find(".stoksPrice:eq(1)").html()
+    time: "#{mm}/#{dd}/#{yy} #{hour % 12}:#{min}#{ampm hour}"
 
 # () -> Promise(index)
 ix = (symbol) ->
-  jsonP = query """select LastTradePriceOnly from yahoo.finance.quote where symbol in ("#{symbol}")"""
+  jsonP = query """select LastTradePriceOnly, LastTradeDate, LastTradeTime from yahoo.finance.quotes where symbol in ("#{symbol}")"""
   jsonP.then (json) ->
-    toNum json.query.results.quote.LastTradePriceOnly
+    q = json.query.results.quote
+    val: toNum q.LastTradePriceOnly
+    time: "#{q.LastTradeDate} #{q.LastTradeTime}" # todo タイムゾーンを合わせたい
 
 # () -> Promise(exchange)
 ex_chyjpy = () ->
-  jsonP = query """select Rate from yahoo.finance.xchange where pair in ("CNYJPY")"""
+  jsonP = query """select Rate, Date, Time from yahoo.finance.xchange where pair in ("CNYJPY")"""
   jsonP.then (json) ->
-    toNum json.query.results.rate.Rate
+    r = json.query.results.rate
+    val: toNum r.Rate
+    time: "#{r.Date} #{r.Time}" # todo タイムゾーンを合わせたい
 
 # (query) -> Promise(json)
 query = (q) ->
