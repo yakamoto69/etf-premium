@@ -1,0 +1,116 @@
+q = """select * from yahoo.finance.quotes where symbol in ("AAPL")"""
+
+r = $.ajax
+type: 'GET'
+url: "http://query.yahooapis.com/v1/public/yql"
+dataType: 'jsonp'
+data:
+  q: q
+  env: "store://datatables.org/alltableswithkeys"
+  format: "json"
+
+
+[結果]
+query:
+  count: 1
+  created: "2013-04-24T12:37:30Z"
+  lang: "en-US"
+  results:
+    quote:
+      AfterHoursChangeRealtime: "N/A - N/A"
+      AnnualizedGain: null
+      Ask: "394.32"
+      AskRealtime: "394.32"
+      AverageDailyVolume: "17939600"
+      Bid: "393.91"
+      BidRealtime: "393.91"
+      BookValue: "135.623"
+      Change: "0.00"
+      ChangeFromFiftydayMovingAverage: "-25.46"
+      ChangeFromTwoHundreddayMovingAverage: "-99.527"
+      ChangeFromYearHigh: "-298.94"
+      ChangeFromYearLow: "+21.03"
+      ChangePercentRealtime: "N/A - 0.00%"
+      ChangeRealtime: "0.00"
+      Change_PercentChange: "0.00 - 0.00%"
+      ChangeinPercent: "0.00%"
+      Commission: null
+      DaysHigh: null
+      DaysLow: null
+      DaysRange: "N/A - N/A"
+      DaysRangeRealtime: "N/A - N/A"
+      DaysValueChange: "- - 0.00%"
+      DaysValueChangeRealtime: "N/A - N/A"
+      DividendPayDate: "Feb 14"
+      DividendShare: "7.95"
+      DividendYield: "1.96"
+      EBITDA: "59.255B"
+      EPSEstimateCurrentYear: "43.66"
+      EPSEstimateNextQuarter: "9.08"
+      EPSEstimateNextYear: "49.02"
+      EarningsShare: "44.107"
+      ErrorIndicationreturnedforsymbolchangedinvalid: null
+      ExDividendDate: "Feb  7"
+      FiftydayMovingAverage: "431.59"
+      HighLimit: null
+      HoldingsGain: null
+      HoldingsGainPercent: "- - -"
+      HoldingsGainPercentRealtime: "N/A - N/A"
+      HoldingsGainRealtime: null
+      HoldingsValue: null
+      HoldingsValueRealtime: null
+      LastTradeDate: "4/23/2013"
+      LastTradePriceOnly: "406.13"
+      LastTradeRealtimeWithTime: "N/A - <b>406.13</b>"
+      LastTradeTime: "4:00pm"
+      LastTradeWithTime: "Apr 23 - <b>406.13</b>"
+      LowLimit: null
+      MarketCapRealtime: null
+      MarketCapitalization: "381.4B"
+      MoreInfo: "cnsprmiIed"
+      Name: "Apple Inc."
+      Notes: null
+      OneyrTargetPrice: "607.96"
+      Open: null
+      OrderBookRealtime: null
+      PEGRatio: "0.47"
+      PERatio: "9.21"
+      PERatioRealtime: null
+      PercebtChangeFromYearHigh: "-42.40%"
+      PercentChange: "0.00%"
+      PercentChangeFromFiftydayMovingAverage: "-5.90%"
+      PercentChangeFromTwoHundreddayMovingAverage: "-19.68%"
+      PercentChangeFromYearLow: "+5.46%"
+      PreviousClose: "406.13"
+      PriceBook: "2.99"
+      PriceEPSEstimateCurrentYear: "9.30"
+      PriceEPSEstimateNextYear: "8.28"
+      PricePaid: null
+      PriceSales: "2.32"
+      SharesOwned: null
+      ShortRatio: "1.20"
+      StockExchange: "NasdaqNM"
+      Symbol: "AAPL"
+      TickerTrend: "&nbsp;======&nbsp;"
+      TradeDate: null
+      TwoHundreddayMovingAverage: "505.657"
+      Volume: "945384"
+      YearHigh: "705.07"
+      YearLow: "385.10"
+      YearRange: "385.10 - 705.07"
+      symbol: "AAPL"
+      __proto__: Object
+      __proto__: Object
+      __defineGetter__: function __defineGetter__() { [native code] }
+      __defineSetter__: function __defineSetter__() { [native code] }
+      __lookupGetter__: function __lookupGetter__() { [native code] }
+      __lookupSetter__: function __lookupSetter__() { [native code] }
+      constructor: function Object() { [native code] }
+      hasOwnProperty: function hasOwnProperty() { [native code] }
+      isPrototypeOf: function isPrototypeOf() { [native code] }
+      propertyIsEnumerable: function propertyIsEnumerable() { [native code] }
+      toLocaleString: function toLocaleString() { [native code] }
+      toString: function toString() { [native code] }
+      valueOf: function valueOf() { [native code] }
+      __proto__: Object
+      __proto__: Object
