@@ -13,9 +13,10 @@ pct = (x) -> (x - 100).toFixed(2)
 toNum = (str) -> parseFloat str.split(",").join("")
 
 dataOf = (code) ->
-  symbol = switch code
-    when "1309" then "000016.SS"
-    when "1322" then "000300.SS"
+  [symbol, exSymbol] = switch code
+    when "1309" then ["000016.SS", "CNYJPY"]
+    when "1322" then ["000300.SS", "CNYJPY"]
+    when "1572" then ["^HSI", "HKDJPY"]
 
   etfP = getEtfInfo(code)
 
@@ -24,7 +25,7 @@ dataOf = (code) ->
   nav_premium = P(etfP).then (etf) -> {val: 100 + etf.premium.val, time: etf.premium.time} # todo なんかvalを変換する感じでやりたい
   nav_index = P(etfP).then (etf) -> etf.index
   nav_exchange = P(etfP).then  (etf) -> etf.exchange
-  [price, index, exchange] = [p(code), ix(symbol), ex_chyjpy()] # todo 元円固定になってる
+  [price, index, exchange] = [p(code), ix(symbol), getExchange(exSymbol)]
 
   iopv = $.when(P(nav), P(nav_index), P(nav_exchange), P(index), P(exchange)).then (nav, nav_index, nav_exchange, index, exchange) ->
     val: nav.val / (nav_index.val * nav_exchange.val) * (index.val * exchange.val)
@@ -46,8 +47,47 @@ dataOf = (code) ->
 
 
 $ () ->
-  $(".etf").each (i, e) ->
-    d = dataOf $(e).attr("code")
+  html = (name, url) ->
+    """
+    <tr>
+      <td>#{name} <a href="#{url}">履歴</a></td>
+      <td>
+        <span class="price">-</span> / <span class="nav_price">-</span>
+      </td>
+      <td>
+        <span class="index">-</span> / <span class="nav_index">-</span>
+      </td>
+      <td>
+        <span class="exchange">-</span> / <span class="nav_exchange">-</span>
+      </td>
+      <td>
+        <span class="iopv">-</span> / <span class="nav">-</span>
+      </td>
+      <td>
+        <span class="premium">-</span> / <span class="nav_premium">-</span>
+      </td>
+    </tr>
+    """
+
+  etfs = [
+    {code: "1309"
+    name: "1309 野村 上証50上投"
+    url: "http://www.morningstar.co.jp/etf/jp/kairiritsu1309.html"},
+
+    {code: "1322"
+    name: "1322 日興 上場パンダ"
+    url: "http://www.morningstar.co.jp/etf/jp/kairiritsu1322.html"},
+
+    {code: "1572"
+    name: "1572 SAM 中国H株ブル2ETF	ハンセン中国"
+    url: "http://www.morningstar.co.jp/etf/jp/kairiritsu1572.html"}
+  ]
+
+  for etf in etfs
+    e = $(html etf.name, etf.url)
+    e.appendTo "#etfList"
+
+    d = dataOf etf.code
 
     commaDat = (valP, precision) ->
       P(valP).then (val) ->
@@ -73,19 +113,20 @@ $ () ->
       premium: pctDat d.premium
 
     for nameP, valP of vals
-      $.when(P(nameP), P(valP)).then (name, val) ->
+      # varつかってるせいか変数使うと容赦なく値が変わってるので、必要な分の値は全部Promise化しないとまずい
+      $.when(P(nameP), P(valP), P(e)).then (name, val, e) ->
         $(e).find(".#{name}").html val.val
         $(e).find(".#{name}").tooltip {title: val.time}
 
 
-# () -> Promise(etf)
+# (code) -> Promise(etf)
 getEtfInfo = (code) ->
   $.ajax
     type: 'GET'
     url: "/etf/" + code
     dataType: 'json'
 
-# () -> Promise(price)
+# (code) -> Promise(price)
 p = (code) ->
   htmlP = $.ajax
     type: 'GET'
@@ -100,7 +141,7 @@ p = (code) ->
     val: toNum $(html).find(".stoksPrice:eq(1)").html()
     time: "#{mm}/#{dd}/#{yy} #{hour % 12}:#{min}#{ampm hour}"
 
-# () -> Promise(index)
+# (symbol) -> Promise(index)
 ix = (symbol) ->
   jsonP = query """select LastTradePriceOnly, LastTradeDate, LastTradeTime from yahoo.finance.quotes where symbol in ("#{symbol}")"""
   jsonP.then (json) ->
@@ -108,9 +149,9 @@ ix = (symbol) ->
     val: toNum q.LastTradePriceOnly
     time: "#{q.LastTradeDate} #{q.LastTradeTime}" # todo タイムゾーンを合わせたい
 
-# () -> Promise(exchange)
-ex_chyjpy = () ->
-  jsonP = query """select Rate, Date, Time from yahoo.finance.xchange where pair in ("CNYJPY")"""
+# (symbol) -> Promise(exchange)
+getExchange = (symbol) ->
+  jsonP = query """select Rate, Date, Time from yahoo.finance.xchange where pair ="#{symbol}" """
   jsonP.then (json) ->
     r = json.query.results.rate
     val: toNum r.Rate

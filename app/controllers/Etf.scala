@@ -2,9 +2,9 @@ package controllers
 
 import play.api.mvc._
 import play.api.libs.json.{JsArray, JsValue, Json}
-import java.io.{File, BufferedInputStream, BufferedOutputStream, ByteArrayOutputStream}
-import java.net.URL
+import java.io.File
 import java.text.NumberFormat
+import java.net.URL
 
 object Etf extends Controller {
 
@@ -45,8 +45,8 @@ object Etf extends Controller {
   }
 
   private def readJs() = {
-    val (url, enc) = (new File("sample.js").toURL, "utf-8")
-//    val (url, enc) = (new URL("http://www.morningstar.co.jp/etf/js/dList.js"), "windows-31j")
+//    val (url, enc) = (new File("sample.js").toURL, "utf-8")
+    val (url, enc) = (new URL("http://www.morningstar.co.jp/etf/js/dList.js"), "windows-31j")
     IOs.readStr(url, enc)
   }
 
@@ -61,10 +61,12 @@ object Etf extends Controller {
   case class EtfInfo(code: String, name: String, price: Value, nav: Value, premium: Value) {
 
     // todo RSSを使って本物データをとってくるようにしたい
-    val chyjpy: Value = (16.4505, "5/10/2013 10:00am")
+    val cnyjpy: Value = (16.4505, "5/10/2013 10:00am")
+    val hkdjpy: Value = (12.996, "5/10/2013 10:00am")
     lazy val (index, exchange): (Value, Value) = code match {
-      case "1309" => ((1808.40, "5/09/2013 3:00pm"), chyjpy)
-      case "1322" => ((2527.89, "5/09/2013 3:00pm"), chyjpy)
+      case "1309" => ((1808.40, "5/09/2013 3:00pm"), cnyjpy)
+      case "1322" => ((2527.89, "5/09/2013 3:00pm"), cnyjpy)
+      case "1572" => ((23211.48, "5/09/2013 3:00pm"), hkdjpy)
     }
 
     def toJson = {
